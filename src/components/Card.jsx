@@ -1,7 +1,7 @@
 import React from 'react';
 import './Card.css';
 
-const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, saturation = 0.0, offsetX = 0, offsetY = 0 }) => {
+const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, saturation = 0.0, offsetX = 0, offsetY = 0, imageZoom = 1.0 }) => {
   
   if (!cardData) return null;
 
@@ -12,16 +12,12 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
     hp,
     types = [],
     evolvesFrom,
-    evolvesTo = [],
     abilities = [],
     attacks = [],
     weaknesses = [],
     resistances = [],
     retreatCost = [],
     rules = [],
-    flavorText,
-    number,
-    rarity,
     images = {},
   } = cardData;
 
@@ -47,23 +43,27 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
     });
   };
 
-  const renderAttack = (attack, idx) => (
-    <div key={idx} className="attack">
-      <div className="attack-header">
-        <span className="attack-cost">{renderEnergyCost(attack.cost)}</span>
-        <span className="attack-name">{attack.name}</span>
-        {attack.damage && <span className="attack-damage">{attack.damage}</span>}
-      </div>
-      {attack.text && (
-        <div 
-          className="attack-text" 
-          style={{'--text-length': attack.text.length}}
-        >
-          {attack.text}
+  const renderAttack = (attack, idx) => {
+    const filteredText = attack.text?.replace(/\(You can't use more than 1 GX attack in a game\.\)/g, '').trim();
+    
+    return (
+      <div key={idx} className="attack">
+        <div className="attack-header">
+          <span className="attack-cost">{renderEnergyCost(attack.cost)}</span>
+          <span className="attack-name">{attack.name}</span>
+          {attack.damage && <span className="attack-damage">{attack.damage}</span>}
         </div>
-      )}
-    </div>
-  );
+        {filteredText && (
+          <div 
+            className="attack-text" 
+            style={{'--text-length': filteredText.length}}
+          >
+            {filteredText}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const renderAbility = (ability, idx) => (
     <div key={idx} className="ability">
@@ -84,6 +84,9 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
 
   const isAceSpec = subtypes.some(s => s === 'ACE SPEC');
   const cardTypeForColor = types.length > 0 ? types[0] : null;
+  const isBasicEnergy = supertype === 'Energy' && subtypes.some(s => s === 'Basic');
+  const isSpecialEnergy = supertype === 'Energy' && subtypes.some(s => s === 'Special');
+  const isTagTeam = subtypes.some(s => s === 'TAG TEAM');
   
   return (
     <div className={`card ${colorMode ? 'color-mode' : ''}`} data-type={cardTypeForColor} data-ace-spec={isAceSpec}>
@@ -109,13 +112,23 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
         </div>
       </div>
 
-      <div className="card-art" data-trainer={supertype === 'Trainer' || supertype === 'Energy'} style={{'--threshold': threshold, '--brightness': brightness, '--saturation': saturation, '--offset-x': `${offsetX}px`, '--offset-y': `${offsetY}px`}}>
-        {showCardArt && images.large && (
-          <img 
-            src={images.large} 
-            alt={name}
-          />
-        )}
+      {isBasicEnergy ? (
+        <div className="basic-energy-symbol">
+          {(() => {
+            // Extract energy type from card name (e.g., "Fire Energy" -> "Fire")
+            const energyType = name.replace(' Energy', '');
+            const symbol = energySymbolMap[energyType] || energyType.charAt(0).toLowerCase();
+            return <span className={`energy-symbol energy-${symbol}`}>{symbol}</span>;
+          })()}
+        </div>
+      ) : (
+        <div className={`card-art${isSpecialEnergy ? ' special-energy-art' : ''}${isTagTeam ? ' tag-team-art' : ''}`} data-trainer={supertype === 'Trainer' || supertype === 'Energy'} style={{'--threshold': threshold, '--brightness': brightness, '--saturation': saturation, '--offset-x': `${offsetX}px`, '--offset-y': `${offsetY}px`, '--image-zoom': imageZoom}}>
+          {showCardArt && images.large && (
+            <img 
+              src={images.large} 
+              alt={name}
+            />
+          )}
         {supertype === 'Pokémon' && (
           <>
             {subtypes.some(s => ['Ancient', 'Future'].includes(s)) && (
@@ -131,26 +144,48 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
             )}
           </>
         )}
-        {supertype !== 'Pokémon' && subtypes.length > 1 && (
-          <div className="card-art-overlay">
-            {subtypes.slice(1).map(s => s.replace('Pokémon Tool', 'Tool')).join(', ')}
-          </div>
-        )}
-      </div>
+          {supertype !== 'Pokémon' && subtypes.length > 1 && (
+            <div className="card-art-overlay">
+              {subtypes.slice(1).map(s => s.replace('Pokémon Tool', 'Tool')).join(', ')}
+            </div>
+          )}
+        </div>
+      )}
 
       {rules.length > 0 && supertype !== 'Pokémon' && (() => {
-        const filteredRules = rules
-          .filter(rule => !rule.includes("You can't have more than 1 ACE SPEC card in your deck"))
-          .filter(rule => !rule.startsWith("ACE SPEC:"));
-        const totalLength = filteredRules.reduce((sum, rule) => sum + rule.length, 0);
+        const ruleText = rules[0];
+        
+        const renderRuleWithEnergySymbols = (text) => {
+          // Replace energy type names with symbols
+          const parts = [];
+          let lastIndex = 0;
+          const energyPattern = /\b(Colorless|Grass|Fire|Water|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Fairy) Energy\b/g;
+          let match;
+          
+          while ((match = energyPattern.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+              parts.push(text.substring(lastIndex, match.index));
+            }
+            const energyType = match[1];
+            const symbol = energySymbolMap[energyType] || energyType.charAt(0).toLowerCase();
+            parts.push(
+              <span key={match.index} className={`energy-symbol energy-${symbol}`}>{symbol}</span>
+            );
+            lastIndex = match.index + match[0].length;
+          }
+          
+          if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+          }
+          
+          return parts.length > 0 ? parts : text;
+        };
         
         return (
-          <div className="rules-section" style={{'--total-text-length': totalLength}}>
-            {filteredRules.map((rule, idx) => (
-              <div key={idx} className="rule-text">
-                {rule}
-              </div>
-            ))}
+          <div className="rules-section" style={{'--total-text-length': ruleText.length}}>
+            <div className="rule-text">
+              {renderRuleWithEnergySymbols(ruleText)}
+            </div>
           </div>
         );
       })()}
@@ -172,9 +207,11 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
           {rules.length > 0 && (
             <div className="rule-box">
               <strong>
-                RULE BOX: {subtypes.includes('ex') ? '2 Prize, ex' : 
+                RULE BOX: {subtypes.includes('VMAX') ? '3 Prize, VMAX' :
+                           subtypes.includes('VUNION') ? '3 Prize, VUNION' :
+                           subtypes.includes('MEGA') && subtypes.includes('ex') ? '3 Prize, Mega ex' :
+                           subtypes.includes('ex') ? '2 Prize, ex' : 
                            subtypes.includes('V') ? '2 Prize, V' :
-                           subtypes.includes('VMAX') ? '3 Prize, VMAX' :
                            subtypes.includes('VSTAR') ? '2 Prize, VSTAR' :
                            'Special'}
               </strong>

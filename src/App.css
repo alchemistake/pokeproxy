@@ -61,26 +61,19 @@ code {
 }
 
 .app-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding: 30px 20px;
+    text-align: left;
+    margin-bottom: 20px;
+    padding: 15px 20px;
     background: linear-gradient(135deg, var(--primary-purple) 0%, var(--purple-dark) 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
-.app-header h1 {
-    margin: 0 0 10px 0;
-    color: white;
-    font-size: 2.5em;
-    font-weight: 700;
-}
-
-.subtitle {
+.app-header h2 {
     margin: 0;
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 1.1em;
-    font-weight: 400;
+    color: white;
+    font-size: 1.5em;
+    font-weight: 600;
 }
 
 .main-content {
@@ -103,6 +96,7 @@ code {
 }
 
 .input-group {
+    margin-top: 20px;
     margin-bottom: 20px;
 }
 
@@ -265,11 +259,6 @@ button:not(:disabled):active {
     border-radius: 6px;
     border-left: 4px solid #c62828;
     margin-top: 15px;
-}
-
-/* Accordion sections */
-.accordion-section {
-    margin-top: 25px;
 }
 
 .accordion-item {

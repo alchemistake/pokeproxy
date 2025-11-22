@@ -20,6 +20,10 @@ function App() {
     const saved = localStorage.getItem('pokeproxy-showControls');
     return saved === 'true';
   });
+  const [ignoreBasicEnergy, setIgnoreBasicEnergy] = useState(() => {
+    const saved = localStorage.getItem('pokeproxy-ignoreBasicEnergy');
+    return saved === 'true';
+  });
 
   const [cardReplacements, setCardReplacements] = useState({});
   const [cardThresholds, setCardThresholds] = useState(() => {
@@ -58,6 +62,11 @@ function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [cardZoomScales, setCardZoomScales] = useState(() => {
+    const saved = localStorage.getItem('pokeproxy-cardZoomScales');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   const [expandedSections, setExpandedSections] = useState({
     howTo: false,
     why: false,
@@ -92,6 +101,11 @@ function App() {
     localStorage.setItem('pokeproxy-showControls', showControls);
   }, [showControls]);
 
+  // Save ignore basic energy preference
+  useEffect(() => {
+    localStorage.setItem('pokeproxy-ignoreBasicEnergy', ignoreBasicEnergy);
+  }, [ignoreBasicEnergy]);
+
   // Save per-card thresholds
   useEffect(() => {
     localStorage.setItem('pokeproxy-cardThresholds', JSON.stringify(cardThresholds));
@@ -120,6 +134,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('pokeproxy-cardOffsets', JSON.stringify(cardOffsets));
   }, [cardOffsets]);
+
+  useEffect(() => {
+    localStorage.setItem('pokeproxy-cardZoomScales', JSON.stringify(cardZoomScales));
+  }, [cardZoomScales]);
 
   const updateCardThreshold = (setCode, cardNumber, value) => {
     const cardKey = `${setCode}/${cardNumber}`;
@@ -235,6 +253,19 @@ function App() {
     return cardOffsets[cardKey] || { x: 0, y: 0 };
   };
 
+  const updateCardZoomScale = (setCode, cardNumber, scale) => {
+    const cardKey = `${setCode}/${cardNumber}`;
+    setCardZoomScales(prev => ({
+      ...prev,
+      [cardKey]: Math.max(0.01, Math.min(3.0, scale))
+    }));
+  };
+
+  const getCardZoomScale = (setCode, cardNumber) => {
+    const cardKey = `${setCode}/${cardNumber}`;
+    return cardZoomScales[cardKey] || 1.0;
+  };
+
   const handleGenerate = async () => {
     setErrors([]);
     setLoading(true);
@@ -267,7 +298,6 @@ function App() {
             targetSetCode = replacementMatch[1].toUpperCase();
             targetCardNumber = replacementMatch[2];
           } else {
-            console.warn(`Invalid replacement format: ${replacement}`);
             setErrors(prev => [...prev, `Warning: Invalid replacement format "${replacement}" for ${cardKey}`]);
           }
         }
@@ -275,24 +305,39 @@ function App() {
         const setId = getSetId(targetSetCode);
         
         if (!setId) {
-          console.warn(`Unknown set code: ${targetSetCode}`);
-          setErrors(prev => [...prev, `Warning: Unknown set code "${targetSetCode}"`]);
-          continue;
+          // If setId not found in API map, still try to fetch (will fallback to local data)
         }
 
         // Fetch each card once, then duplicate based on count
+        // Pass both setId (for API) and targetSetCode (for local fallback)
         for (let i = 0; i < card.count; i++) {
-          cardDataPromises.push(fetchCardData(setId, targetCardNumber));
+          cardDataPromises.push(fetchCardData(setId, targetCardNumber, targetSetCode));
           cardMetadata.push({ setCode: targetSetCode, cardNumber: targetCardNumber });
         }
       }
 
-      const cardDataArray = await Promise.all(cardDataPromises);
-      // Attach set code to each card for threshold tracking
-      const cardsWithMetadata = cardDataArray.map((card, idx) => ({
-        ...card,
-        _setCode: cardMetadata[idx].setCode
-      }));
+      const cardDataResults = await Promise.allSettled(cardDataPromises);
+      
+      // Filter successful cards and collect errors
+      const cardsWithMetadata = [];
+      const fetchErrors = [];
+      
+      cardDataResults.forEach((result, idx) => {
+        if (result.status === 'fulfilled') {
+          cardsWithMetadata.push({
+            ...result.value,
+            _setCode: cardMetadata[idx].setCode
+          });
+        } else {
+          const errorMsg = `Failed to load ${cardMetadata[idx].setCode}/${cardMetadata[idx].cardNumber}: ${result.reason.message}`;
+          fetchErrors.push(errorMsg);
+        }
+      });
+      
+      if (fetchErrors.length > 0) {
+        setErrors(fetchErrors);
+      }
+      
       setCards(cardsWithMetadata);
       
       // Update decklist text with replacements
@@ -349,84 +394,11 @@ function App() {
         <span>BETA</span>
       </div>
       <header className="app-header no-print">
-        <h1>🎴 Pokemon TCG Proxy Generator</h1>
-        <p className="subtitle">Beautiful, low-ink proxies for playtesting</p>
+        <h2>💰 Pokemon TCG Low-Ink Proxy Generator</h2>
       </header>
 
       <div className="main-content">
         <div className="input-section no-print">
-        <div className="input-group">
-          <label htmlFor="decklist">
-            📝 Enter your decklist
-          </label>
-          <textarea
-            id="decklist"
-            value={decklistText}
-            onChange={(e) => setDecklistText(e.target.value)}
-            placeholder={`Format examples:\nMunkidori TWM 95\n4 Sinistcha ex TWM 23\n\n${exampleDecklist}`}
-            rows={15}
-          />
-          <div className="button-group">
-            <button onClick={handleGenerate} disabled={loading || !decklistText.trim()} className="generate-btn">
-              {loading ? '⏳ Generating...' : '💫 Generate Proxies'}
-            </button>
-            {cards.length > 0 && (
-              <button onClick={handlePrint} className="print-button">
-                🖨️ Print Cards
-              </button>
-            )}
-          </div>
-          
-          <div className="toggles-compact">
-            <div className="toggle-item">
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={colorMode} 
-                  onChange={(e) => setColorMode(e.target.checked)}
-                />
-                <span className="toggle-switch"></span>
-                <span>Color</span>
-              </label>
-            </div>
-            <div className="toggle-item">
-              <label>
-                <input 
-                  type="checkbox" 
-                  checked={showCardArt} 
-                  onChange={(e) => setShowCardArt(e.target.checked)}
-                />
-                <span className="toggle-switch"></span>
-                <span>Card Art</span>
-              </label>
-            </div>
-            {showCardArt && (
-              <div className="toggle-item">
-                <label>
-                  <input 
-                    type="checkbox" 
-                    checked={showControls} 
-                    onChange={(e) => setShowControls(e.target.checked)}
-                  />
-                  <span className="toggle-switch"></span>
-                  <span>Controls</span>
-                </label>
-              </div>
-            )}
-          </div>
-
-        </div>
-
-        {errors.length > 0 && (
-          <div className="error-message">
-            <ul>
-              {errors.map((err, idx) => (
-                <li key={idx}>{err}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
         <div className="accordion-section">
           <div className="accordion-item">
             <button className="accordion-header" onClick={() => toggleSection('howTo')}>
@@ -480,10 +452,12 @@ function App() {
                 <div>
                 <p><strong>Current known issues and limitations:</strong></p>
                 <ul>
-                  <li>SVP, MEE, MEP and some other sets are not fully supported. Data is missing.</li>
+                  <li>Card size is not verified. Don't print</li>
+                  <li>Text re-sizing is inconsistent, It needs to be smarter with respect to other content on the card.</li>
+                  <li>Some set's data are missing, I'm trying to solve it before release.</li>
                   <li>Some cards are going over border</li>
-                  <li>This is a big one, card size is not verified.</li>
                   <li>Different Languages are not supported, I'm working on that.</li>
+                  <li>Celebrations set is not getting detected</li>
                 </ul>
                 <p><em>We're actively working on these issues. Check back for updates!</em></p>
                 </div>
@@ -517,6 +491,91 @@ function App() {
             )}
           </div>
         </div>
+
+        <div className="input-group">
+          <label htmlFor="decklist">
+            📝 Enter your decklist
+          </label>
+          <textarea
+            id="decklist"
+            value={decklistText}
+            onChange={(e) => setDecklistText(e.target.value)}
+            placeholder={`Format examples:\nMunkidori TWM 95\n4 Sinistcha ex TWM 23\n\n${exampleDecklist}`}
+            rows={15}
+          />
+          <div className="button-group">
+            <button onClick={handleGenerate} disabled={loading || !decklistText.trim()} className="generate-btn">
+              {loading ? '⏳ Generating...' : '💫 Generate Proxies'}
+            </button>
+            {cards.length > 0 && (
+              <button onClick={handlePrint} className="print-button">
+                🖨️ Print Cards
+              </button>
+            )}
+          </div>
+          
+          <div className="toggles-compact">
+            <div className="toggle-item">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={colorMode} 
+                  onChange={(e) => setColorMode(e.target.checked)}
+                />
+                <span className="toggle-switch"></span>
+                <span>Color</span>
+              </label>
+            </div>
+            <div className="toggle-item">
+              <label>
+                <input 
+                  type="checkbox" 
+                  checked={showCardArt} 
+                  onChange={(e) => setShowCardArt(e.target.checked)}
+                />
+                <span className="toggle-switch"></span>
+                <span>Card Art</span>
+              </label>
+            </div>
+            {showCardArt && (
+              <>
+                <div className="toggle-item">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      checked={showControls} 
+                      onChange={(e) => setShowControls(e.target.checked)}
+                    />
+                    <span className="toggle-switch"></span>
+                    <span>Controls</span>
+                  </label>
+                </div>
+                <div className="toggle-item">
+                  <label>
+                    <input 
+                      type="checkbox" 
+                      checked={ignoreBasicEnergy} 
+                      onChange={(e) => setIgnoreBasicEnergy(e.target.checked)}
+                    />
+                    <span className="toggle-switch"></span>
+                    <span>Hide Basic Energy</span>
+                  </label>
+                </div>
+              </>
+            )}
+          </div>
+
+        </div>
+
+        {errors.length > 0 && (
+          <div className="error-message">
+            <ul>
+              {errors.map((err, idx) => (
+                <li key={idx}>{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         </div>
 
         {cards.length > 0 && (
@@ -530,11 +589,18 @@ function App() {
                 const setCode = card._setCode || 'UNKNOWN';
                 const cardNumber = card.number;
                 
+                // Check if this is a basic energy card and should be hidden
+                const isBasicEnergy = card.supertype === 'Energy' && card.subtypes?.includes('Basic');
+                if (ignoreBasicEnergy && isBasicEnergy) {
+                  return null;
+                }
+                
                 // Get appropriate filter values based on color mode
                 const threshold = colorMode ? getCardThresholdColor(setCode, cardNumber) : getCardThreshold(setCode, cardNumber);
                 const brightness = colorMode ? getCardBrightnessColor(setCode, cardNumber) : getCardBrightness(setCode, cardNumber);
                 const saturation = colorMode ? getCardSaturationColor(setCode, cardNumber) : getCardSaturation(setCode, cardNumber);
                 const offset = getCardOffset(setCode, cardNumber);
+                const imageZoom = getCardZoomScale(setCode, cardNumber);
                 
                 return (
                   <div key={cardKey} className="card-with-controls">
@@ -547,6 +613,7 @@ function App() {
                       saturation={saturation}
                       offsetX={offset.x}
                       offsetY={offset.y}
+                      imageZoom={imageZoom}
                     />
                     {showCardArt && showControls && (
                       <div className="card-controls no-print">
@@ -652,13 +719,15 @@ function App() {
                           </label>
                         )}
                         <div className="offset-controls">
-                          <label>Position</label>
+                          <label>Position & Zoom ({(imageZoom * 100).toFixed(0)}%)</label>
                           <div className="offset-buttons">
                             <button onClick={() => updateCardOffset(setCode, cardNumber, offset.x, offset.y - 1)} title="Move Up">⬆️</button>
                             <button onClick={() => updateCardOffset(setCode, cardNumber, offset.x, offset.y + 1)} title="Move Down">⬇️</button>
-                            <button onClick={() => updateCardOffset(setCode, cardNumber, 0, 0)} title="Reset Position">0️⃣</button>
+                            <button onClick={() => { updateCardOffset(setCode, cardNumber, 0, 0); updateCardZoomScale(setCode, cardNumber, 1.0); }} title="Reset Position & Zoom">0️⃣</button>
                             <button onClick={() => updateCardOffset(setCode, cardNumber, offset.x - 1, offset.y)} title="Move Left">⬅️</button>
                             <button onClick={() => updateCardOffset(setCode, cardNumber, offset.x + 1, offset.y)} title="Move Right">➡️</button>
+                            <button onClick={() => updateCardZoomScale(setCode, cardNumber, imageZoom - 0.01)} title="Zoom Out">➖</button>
+                            <button onClick={() => updateCardZoomScale(setCode, cardNumber, imageZoom + 0.01)} title="Zoom In">➕</button>
                           </div>
                         </div>
                       </div>
