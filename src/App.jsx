@@ -61,6 +61,7 @@ function App() {
   const [expandedSections, setExpandedSections] = useState({
     howTo: false,
     why: false,
+    report: false,
   });
 
   const toggleSection = (section) => {
@@ -343,6 +344,9 @@ function App() {
 
   return (
     <div className="app">
+      <div className="beta-triangle no-print">
+        <span>BETA</span>
+      </div>
       <header className="app-header no-print">
         <h1>🎴 Pokemon TCG Proxy Generator</h1>
         <p className="subtitle">Beautiful, low-ink proxies for playtesting</p>
@@ -436,10 +440,9 @@ function App() {
                   <li>Optionally add quantity: <code>4 CardName SET NUMBER</code></li>
                   <li>Click "Generate Proxies"</li>
                   <li>Adjust filters and position for each card if needed</li>
+                  <li>Change it with the full art version for better art</li>
                   <li>Click "Print Cards" to print</li>
                 </ol>
-                <p><strong>Supported sets:</strong> All major sets from Scarlet & Violet, Sword & Shield, Sun & Moon, XY, and Black & White series.</p>
-                <p><strong>Example:</strong> <code>Munkidori TWM 95</code> (Twilight Masquerade #95)</p>
                 </div>
               </div>
             )}
@@ -461,6 +464,32 @@ function App() {
                 <p>Full closure.</p>
                 <p>Even though I am a software engineer, I literally wrote 0 lines of this code.</p>
                 <p>It is vibe coded.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="accordion-item">
+            <button className="accordion-header" onClick={() => toggleSection('report')}>
+              <span>🐛 Report Issues / Feedback</span>
+              <span className="accordion-icon">{expandedSections.report ? '−' : '+'}</span>
+            </button>
+            {expandedSections.report && (
+              <div className="accordion-content open">
+                <div>
+                <p><strong>Found a bug or have a feature request?</strong></p>
+                <p>You can reach out through any of these channels:</p>
+                <ul>
+                  <li>🐙 <strong>GitHub Issues:</strong> <a href="https://github.com/alchemistake/pokeproxy/issues" target="_blank" rel="noopener noreferrer">github.com/alchemistake/pokeproxy/issues</a></li>
+                  <li>🐦 <strong>Twitter:</strong> <a href="https://twitter.com/alchemistake" target="_blank" rel="noopener noreferrer">@alchemistake</a></li>
+                </ul>
+                <p>Please include:</p>
+                <ul>
+                  <li>What you were trying to do</li>
+                  <li>What went wrong</li>
+                  <li>Browser and OS (if relevant)</li>
+                  <li>Example card or decklist that caused the issue</li>
+                </ul>
                 </div>
               </div>
             )}
