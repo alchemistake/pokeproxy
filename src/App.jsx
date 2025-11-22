@@ -61,6 +61,7 @@ function App() {
   const [expandedSections, setExpandedSections] = useState({
     howTo: false,
     why: false,
+    knownIssues: false,
     report: false,
   });
 
@@ -464,6 +465,27 @@ function App() {
                 <p>Full closure.</p>
                 <p>Even though I am a software engineer, I literally wrote 0 lines of this code.</p>
                 <p>It is vibe coded.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="accordion-item">
+            <button className="accordion-header" onClick={() => toggleSection('knownIssues')}>
+              <span>⚠️ Known Issues</span>
+              <span className="accordion-icon">{expandedSections.knownIssues ? '−' : '+'}</span>
+            </button>
+            {expandedSections.knownIssues && (
+              <div className="accordion-content open">
+                <div>
+                <p><strong>Current known issues and limitations:</strong></p>
+                <ul>
+                  <li>SVP, MEE, MEP and some other sets are not fully supported. Data is missing.</li>
+                  <li>Some cards are going over border</li>
+                  <li>This is a big one, card size is not verified.</li>
+                  <li>Different Languages are not supported, I'm working on that.</li>
+                </ul>
+                <p><em>We're actively working on these issues. Check back for updates!</em></p>
                 </div>
               </div>
             )}
