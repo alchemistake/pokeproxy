@@ -1,0 +1,422 @@
+/* Standard Pokemon Card Size: 2.5" x 3.5" (63mm x 88mm) */
+/* For printing, we'll use inches and ensure proper aspect ratio */
+
+.card {
+    width: 2.5in;
+    height: 3.5in;
+    border: 1px solid #000;
+    padding: 0.1in;
+    margin: 0;
+    background: white;
+    font-family: 'Gill Sans', Arial, sans-serif;
+    font-size: 8pt;
+    line-height: 1.2;
+    display: flex;
+    flex-direction: column;
+    page-break-inside: avoid;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: 1px solid #000;
+    padding-bottom: 2pt;
+    margin-bottom: 4pt;
+    flex-shrink: 0;
+    margin: -0.1in -0.1in 4pt -0.1in;
+    padding: 0.1in 0.1in 2pt 0.1in;
+}
+
+.card-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 2pt;
+    gap: 4pt;
+}
+
+.card-name {
+    flex: 1;
+    white-space: nowrap;
+    min-width: 0;
+    font-size: clamp(6pt, calc(10pt - (var(--name-length) - 15) * 0.15pt), 10pt);
+}
+
+.card-hp {
+    white-space: nowrap;
+    margin-left: 4pt;
+}
+
+.card-meta {
+    font-size: 7pt;
+    color: #333;
+}
+
+.evolution-info {
+    font-size: 7pt;
+    font-style: italic;
+    margin-bottom: 4pt;
+    color: #555;
+    flex-shrink: 0;
+}
+
+.rules-section {
+    margin-bottom: 4pt;
+    padding: 2pt;
+    border: 1px solid #ccc;
+    background: #f9f9f9;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.rule {
+    font-size: 6pt;
+    margin: 1pt 0;
+    font-style: italic;
+}
+
+.rule-text {
+    font-size: clamp(5pt, calc(7pt - (var(--total-text-length) - 300) * 0.005pt), 7pt);
+    margin: 1pt 0;
+    line-height: 1.1;
+}
+
+.card-art {
+    width: 100%;
+    /* Box aspect ratio: 617:383 ≈ 1.61:1 */
+    height: calc(2.3in / 1.61);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 4pt;
+    flex-shrink: 0;
+    border: 1px solid #ccc;
+}
+
+.card-art img {
+    position: absolute;
+    /* Scale image: full image is 733px wide, we want to show 617px of it across 100% box width */
+    width: calc(100% * 733 / 617);
+    height: auto;
+    /* Offset by 58px horizontal and 101px vertical from original 733x1024 image, plus user adjustment */
+    left: calc(-58 / 617 * 100% + var(--offset-x, 0px));
+    top: calc(-101 / 383 * 100% + var(--offset-y, 0px));
+}
+
+/* Trainer cards have different artwork position */
+.card-art[data-trainer="true"] img {
+    left: calc(-59 / 617 * 100% + var(--offset-x, 0px));
+    top: calc(-146 / 383 * 100% + var(--offset-y, 0px));
+}
+
+/* Dynamic filters for low-ink printing */
+.card-art img {
+    filter: saturate(var(--saturation, 0)) grayscale(100%) contrast(var(--threshold, 1)) brightness(var(--brightness, 1));
+}
+
+.card.color-mode .card-art img {
+    filter: saturate(var(--saturation, 0)) contrast(var(--threshold, 1)) brightness(var(--brightness, 1));
+}
+
+.card-art-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2pt 4pt;
+    font-size: 8pt;
+    font-weight: bold;
+    border: 1px solid #000;
+    border-radius: 2pt;
+    z-index: 1;
+}
+
+.card-art-evolution {
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: rgba(255, 255, 255, 1);
+    padding: 2pt 4pt;
+    font-size: 7pt;
+    font-weight: bold;
+    border: 1px solid #000;
+    border-radius: 2pt;
+    z-index: 1;
+}
+
+.card-spacer {
+    /* Removed flex: 1 for top-to-bottom layout */
+    min-height: 0;
+}
+
+.abilities-section,
+.attacks-section {
+    margin-bottom: 4pt;
+    flex-shrink: 0;
+}
+
+.ability {
+    margin-bottom: 3pt;
+    padding: 2pt;
+    border-left: 2px solid #000;
+    padding-left: 4pt;
+}
+
+.ability-header {
+    font-weight: bold;
+    font-size: 8pt;
+    margin-bottom: 1pt;
+}
+
+.ability-type {
+    text-transform: uppercase;
+    font-size: 6pt;
+    margin-right: 2pt;
+}
+
+.ability-name {
+    font-size: 8pt;
+}
+
+.ability-text {
+    font-size: clamp(5pt, calc(7pt - (var(--text-length) - 100) * 0.01pt), 7pt);
+    margin-top: 1pt;
+    line-height: 1.1;
+}
+
+.attack {
+    margin-bottom: 3pt;
+    padding: 2pt;
+    border: 1px solid #ddd;
+    background: #fafafa;
+}
+
+.attack-header {
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 1pt;
+    gap: 4pt;
+}
+
+.attack-cost {
+    font-size: 7pt;
+    white-space: nowrap;
+}
+
+.attack-name {
+    flex: 1;
+    font-size: 8pt;
+}
+
+.attack-damage {
+    font-weight: bold;
+    font-size: 9pt;
+    white-space: nowrap;
+}
+
+.attack-text {
+    font-size: clamp(5pt, calc(6pt - (var(--text-length) - 80) * 0.008pt), 6pt);
+    margin-top: 1pt;
+    line-height: 1.1;
+}
+
+.energy-symbol {
+    font-family: 'EssentiarumTCG', 'Gill Sans', Arial, sans-serif;
+    font-size: 9pt;
+    display: inline-block;
+    width: 11pt;
+    height: 11pt;
+    line-height: 11pt;
+    text-align: center;
+    border-radius: 50%;
+    background-color: white;
+}
+
+.card-footer {
+    padding-top: 2pt;
+    border-top: 1px solid #ccc;
+    font-size: 7pt;
+    flex-shrink: 0;
+    margin-top: auto;
+}
+
+.rule-box {
+    margin-bottom: 3pt;
+    font-size: 7pt;
+}
+
+.footer-line {
+    display: flex;
+    gap: 4pt;
+    flex-wrap: wrap;
+}
+
+.card-type {
+    white-space: nowrap;
+}
+
+.trainer-subtype {
+    font-size: 10pt;
+    margin-bottom: 4pt;
+    flex-shrink: 0;
+}
+
+
+
+/* Print styles - 3x3 grid on A4 */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    .card {
+        margin: 0;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    @page {
+        size: A4;
+        margin: 0.3in 0.2in;
+    }
+
+    /* Force colors to print */
+    .card.color-mode .card-header,
+    .card.color-mode .energy-symbol {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color-adjust: exact;
+    }
+}
+
+/* Screen-only styles for UI elements */
+@media screen {
+    .card {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* Color Mode Styles */
+.card.color-mode[data-type="Grass"] .card-header {
+    background-color: #78C850;
+    color: white;
+}
+
+.card.color-mode[data-type="Fire"] .card-header {
+    background-color: #F08030;
+    color: white;
+}
+
+.card.color-mode[data-type="Water"] .card-header {
+    background-color: #6890F0;
+    color: white;
+}
+
+.card.color-mode[data-type="Lightning"] .card-header {
+    background-color: #F8D030;
+    color: black;
+}
+
+.card.color-mode[data-type="Psychic"] .card-header {
+    background-color: #F85888;
+    color: white;
+}
+
+.card.color-mode[data-type="Fighting"] .card-header {
+    background-color: #C03028;
+    color: white;
+}
+
+.card.color-mode[data-type="Darkness"] .card-header {
+    background-color: #705848;
+    color: white;
+}
+
+.card.color-mode[data-type="Metal"] .card-header {
+    background-color: #B8B8D0;
+    color: black;
+}
+
+.card.color-mode[data-type="Dragon"] .card-header {
+    background-color: #7038F8;
+    color: white;
+}
+
+.card.color-mode[data-type="Fairy"] .card-header {
+    background-color: #EE99AC;
+    color: black;
+}
+
+.card.color-mode[data-type="Colorless"] .card-header {
+    background-color: #A8A878;
+    color: white;
+}
+
+/* ACE SPEC gradient for trainers */
+.card.color-mode[data-ace-spec="true"] .card-header {
+    background: linear-gradient(135deg, #FF69B4 0%, #4169E1 100%);
+    color: white;
+}
+
+/* Circular backgrounds for energy symbols in color mode - override white bg */
+
+/* Energy-specific colors (based on the actual energy type, not card type) */
+.card.color-mode .energy-symbol.energy-g {
+    background-color: #78C850;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-r {
+    background-color: #F08030;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-w {
+    background-color: #6890F0;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-l {
+    background-color: #F8D030;
+    color: black;
+}
+
+.card.color-mode .energy-symbol.energy-p {
+    background-color: #F85888;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-f {
+    background-color: #C03028;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-d {
+    background-color: #705848;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-m {
+    background-color: #B8B8D0;
+    color: black;
+}
+
+.card.color-mode .energy-symbol.energy-n {
+    background-color: #7038F8;
+    color: white;
+}
+
+.card.color-mode .energy-symbol.energy-y {
+    background-color: #EE99AC;
+    color: black;
+}
+
+.card.color-mode .energy-symbol.energy-c {
+    background-color: #A8A878;
+    color: white;
+}

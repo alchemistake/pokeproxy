@@ -1,0 +1,25 @@
+@font-face {
+    font-family: 'EssentiarumTCG';
+    src: url('/pokeproxy/fonts/EssentiarumTCG.woff2') format('woff2'),
+        url('/pokeproxy/fonts/EssentiarumTCG.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Gill Sans';
+    src: url('/pokeproxy/fonts/Gill Sans.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
