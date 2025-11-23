@@ -9,5 +9,6 @@
 * Attacks with energy cost + is not getting rendered correctly
 * Weak: - | Res: - | Retreat: c looks WEIRD updown updown
 * real life scaling preview, idk how, add a slider for scaling then user scales them with a card manually?
+* scraper needs to be not a script but like a real src folder, it is annoying.
 
 * Stuff from known issues
