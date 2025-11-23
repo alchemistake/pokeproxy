@@ -43,8 +43,52 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
     });
   };
 
+  // Calculate text scaling based on total content length
+  const calculateTextScaling = () => {
+    const CHARS_PER_LINE = 45; // Approximate characters per line at base font size
+    const MAX_LINES = 9; // Maximum lines that can fit comfortably
+    
+    // Calculate estimated lines for each section
+    const sections = [];
+    
+    abilities.forEach((ability, idx) => {
+      if (ability.text) {
+        const lines = Math.ceil(ability.text.length / CHARS_PER_LINE) + 0.5; // +0.5 for header
+        sections.push({ type: 'ability', index: idx, lines, text: ability.text });
+      }
+    });
+    
+    attacks.forEach((attack, idx) => {
+      const filteredText = attack.text?.replace(/\(You can't use more than 1 GX attack in a game\.\)/g, '').trim();
+      if (filteredText) {
+        const lines = Math.ceil(filteredText.length / CHARS_PER_LINE) + 0.5; // +0.5 for header
+        sections.push({ type: 'attack', index: idx, lines, text: filteredText });
+      }
+    });
+    
+    const totalLines = sections.reduce((sum, s) => sum + s.lines, 0);
+    
+    // If total lines fit within limit, no scaling needed
+    if (totalLines <= MAX_LINES) {
+      return sections.map(s => ({ ...s, scale: 1.0 }));
+    }
+    
+    // Calculate scale factor needed to fit everything
+    const scaleFactor = MAX_LINES / totalLines;
+    
+    // Apply scaling to all sections uniformly
+    return sections.map(s => ({
+      ...s,
+      scale: scaleFactor
+    }));
+  };
+  
+  const textScaling = calculateTextScaling();
+
   const renderAttack = (attack, idx) => {
     const filteredText = attack.text?.replace(/\(You can't use more than 1 GX attack in a game\.\)/g, '').trim();
+    const scalingInfo = textScaling.find(s => s.type === 'attack' && s.index === idx);
+    const scaleFactor = scalingInfo ? scalingInfo.scale : 1.0;
     
     return (
       <div key={idx} className="attack">
@@ -56,7 +100,7 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
         {filteredText && (
           <div 
             className="attack-text" 
-            style={{'--text-length': filteredText.length}}
+            style={{'--scale-factor': scaleFactor}}
           >
             {filteredText}
           </div>
@@ -65,22 +109,27 @@ const Card = ({ cardData, colorMode, showCardArt, threshold, brightness = 1.0, s
     );
   };
 
-  const renderAbility = (ability, idx) => (
-    <div key={idx} className="ability">
-      <div className="ability-header">
-        <span className="ability-type">{ability.type}:</span>
-        <span className="ability-name">{ability.name}</span>
-      </div>
-      {ability.text && (
-        <div 
-          className="ability-text" 
-          style={{'--text-length': ability.text.length}}
-        >
-          {ability.text}
+  const renderAbility = (ability, idx) => {
+    const scalingInfo = textScaling.find(s => s.type === 'ability' && s.index === idx);
+    const scaleFactor = scalingInfo ? scalingInfo.scale : 1.0;
+    
+    return (
+      <div key={idx} className="ability">
+        <div className="ability-header">
+          <span className="ability-type">{ability.type}:</span>
+          <span className="ability-name">{ability.name}</span>
         </div>
-      )}
-    </div>
-  );
+        {ability.text && (
+          <div 
+            className="ability-text" 
+            style={{'--scale-factor': scaleFactor}}
+          >
+            {ability.text}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const isAceSpec = subtypes.some(s => s === 'ACE SPEC');
   const cardTypeForColor = types.length > 0 ? types[0] : null;

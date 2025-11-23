@@ -5,5 +5,9 @@
 * General Human Cleanup
 * Better Image processing
 * ~~FAVICOOON~~
+* GX,ex,Mega, Icons.
+* Attacks with energy cost + is not getting rendered correctly
+* Weak: - | Res: - | Retreat: c looks WEIRD updown updown
+* real life scaling preview, idk how, add a slider for scaling then user scales them with a card manually?
 
 * Stuff from known issues

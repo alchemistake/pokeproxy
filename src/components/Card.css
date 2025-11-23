@@ -253,7 +253,7 @@
 }
 
 .ability-text {
-    font-size: clamp(5pt, calc(7pt - (var(--text-length) - 100) * 0.01pt), 7pt);
+    font-size: calc(7pt * var(--scale-factor, 1.0));
     /* margin-top: 1pt; */
     line-height: 1.1;
 }
@@ -264,7 +264,7 @@
     background: #fff;
 }
 
-.attack + .attack {
+.attack+.attack {
     border-top: none;
 }
 
@@ -292,7 +292,7 @@
 }
 
 .attack-text {
-    font-size: clamp(5pt, calc(6pt - (var(--text-length) - 80) * 0.008pt), 6pt);
+    font-size: calc(7pt * var(--scale-factor, 1.0));
     margin-top: 1pt;
     line-height: 1.1;
 }
