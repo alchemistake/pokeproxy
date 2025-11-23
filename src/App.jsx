@@ -390,8 +390,8 @@ function App() {
 
   return (
     <div className="app">
-      <div className="beta-triangle no-print">
-        <span>BETA</span>
+      <div className="beta-ribbon no-print">
+        BETA
       </div>
       <header className="app-header no-print">
         <h2>💰 Pokemon TCG Low-Ink Proxy Generator</h2>
