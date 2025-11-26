@@ -12,5 +12,11 @@
 * scraper needs to be not a script but like a real src folder, it is annoying.
 * Global contrast setting as a baseline, then people can overwrite
 * costless attacks are weirdly shown...
+* a3 and other papers mode
+* full image modes like limitless
+* datasource to pkmncards.com
+* human rewrites for scraper.
+* cut lines guides
+* bleed extension
 
 * Stuff from known issues
